@@ -1125,41 +1125,46 @@ save(kid,file="~/CDC3/data/kidney_datasets/GSE131685/GSE131685_processed.RData")
 dir.create("~/CDC3/data/kidney_datasets/PRJNA605003")
 
 files<-list.files("~/CDC3/data/kidney_datasets/PRJNA605003","out.tab",full.names=T)
-samplename<-gsub("ReadsPerGene.out.tab","",gsub(".*\\/","",files))
-pdata<-data.frame(Run=samplename,histology=c("Normal","Normal","Tumor","Tumor","Tumor","Normal","Tumor","Tumor","Tumor","Tumor","Normal","Tumor","Normal","Normal","Tumor","Tumor","Tumor"))
+                                                                          
+if (length(files) > 0){                                                                          
+  samplename<-gsub("ReadsPerGene.out.tab","",gsub(".*\\/","",files))
+  pdata<-data.frame(Run=samplename,histology=c("Normal","Normal","Tumor","Tumor","Tumor","Normal","Tumor","Tumor","Tumor","Tumor","Normal","Tumor","Normal","Normal","Tumor","Tumor","Tumor"))
 
-exp<-read.table(files[1],sep="\t",as.is=T)
-exp<-exp[,c(1,4)]
-rownames(exp)<-exp$V1
-for(i in 2:length(files)){
-  temp<-read.table(files[i],sep="\t",as.is=T,row.names=1)
-  exp<-cbind(exp,temp$V4)
-}
-exp<-exp[grep("ENSG",rownames(exp)),-1]
-colnames(exp)<-samplename
+  exp<-read.table(files[1],sep="\t",as.is=T)
+  exp<-exp[,c(1,4)]
+  rownames(exp)<-exp$V1
+  for(i in 2:length(files)){
+    temp<-read.table(files[i],sep="\t",as.is=T,row.names=1)
+    exp<-cbind(exp,temp$V4)
+  }
+  exp<-exp[grep("ENSG",rownames(exp)),-1]
+  colnames(exp)<-samplename
 
-rownames(pdata)<-pdata$Run
-pdata<-pdata[colnames(exp),]
-identical(rownames(pdata),colnames(exp))
+  rownames(pdata)<-pdata$Run
+  pdata<-pdata[colnames(exp),]
+  identical(rownames(pdata),colnames(exp))
 
-exp<-data.frame(Ensembl_ID=gsub("\\..*","",rownames(exp)),exp, stringsAsFactors = F)
+  exp<-data.frame(Ensembl_ID=gsub("\\..*","",rownames(exp)),exp, stringsAsFactors = F)
 
-annot<-read.table("~/CDC3/data/gene_annotation_gencode32_hg19.txt",header=T,sep="\t",as.is=T)
-annot<-annot[,c(1,3:4)]
-annot$Ensembl_ID=gsub("\\..*","",annot$gene_id)
-annot<-unique(annot[,-1])
-exp<-merge(annot,exp,by="Ensembl_ID",all.y=T)
-fdata<-aggregate(exp$gene_length,by=list(Symbol=exp$gene_name),max)
-colnames(fdata)[2]<-"gene_length"
-rownames(fdata)<-fdata$Symbol
-exp<-aggregate(exp[,-c(1:3)],by=list(Symbol=exp$gene_name),sum)
-rownames(exp)<-exp$Symbol
-exp<-as.matrix(exp[,-1])
+  annot<-read.table("~/CDC3/data/gene_annotation_gencode32_hg19.txt",header=T,sep="\t",as.is=T)
+  annot<-annot[,c(1,3:4)]
+  annot$Ensembl_ID=gsub("\\..*","",annot$gene_id)
+  annot<-unique(annot[,-1])
+  exp<-merge(annot,exp,by="Ensembl_ID",all.y=T)
+  fdata<-aggregate(exp$gene_length,by=list(Symbol=exp$gene_name),max)
+  colnames(fdata)[2]<-"gene_length"
+  rownames(fdata)<-fdata$Symbol
+  exp<-aggregate(exp[,-c(1:3)],by=list(Symbol=exp$gene_name),sum)
+  rownames(exp)<-exp$Symbol
+  exp<-as.matrix(exp[,-1])
 
-dataset<-ExpressionSet(assayData=exp,
+  dataset<-ExpressionSet(assayData=exp,
                        featureData = new("AnnotatedDataFrame",fdata),
                        phenoData=new("AnnotatedDataFrame",pdata))
-save(dataset,file="~/CDC3/data/kidney_datasets/PRJNA605003/PRJNA605003_raw_counts_collSum.RData")
+  save(dataset,file="~/CDC3/data/kidney_datasets/PRJNA605003/PRJNA605003_raw_counts_collSum.RData")
+  } else {
+    print("No files detected. Skipping dataset PRJNA605003.")
+  }
 
 #*************************
 # GSE2109
@@ -1516,46 +1521,52 @@ save(dataset.zscore,file="~/CDC3/data/kidney_datasets/metadataset_CDC_zscore_qua
 
 dir.create("~/CDC3/data/ccle_ctrp")
 
-# Download RNA-Seq FPKM data (file CCLE_RNAseq_genes_rpkm_20180929.gct.gz) cell line annotation (file Cell_lines_annotations_20181226.txt )
+# Download RNA-Seq FPKM data (file CCLE_RNAseq_genes_rpkm_20180929.gct.gz) cell line annotation (file Cell_lines_annotations_20181226.txt)
 # and gene annotations (file gencode.v19.genes.v7_model.patched_contigs.gtf.gz) 
 # from https://portals.broadinstitute.org/ccle/data (login required).
 # Save downloaded file in folder ~/CDC3/data/ccle_ctrp
+                                                                          
+isPresent<-sum(list.files("~/CDC3/data/ccle_ctrp") %in% c("CCLE_RNAseq_genes_rpkm_20180929.gct.gz", "Cell_lines_annotations_20181226.txt", "gencode.v19.genes.v7_model.patched_contigs.gtf.gz"))
 
-gunzip(filename=path.expand("~/CDC3/data/ccle_ctrp/CCLE_RNAseq_genes_rpkm_20180929.gct.gz"),destname=path.expand("~/CDC3/data/ccle_ctrp/CCLE_RNAseq_genes_rpkm_20180929.gct"))
-gunzip(filename=path.expand("~/CDC3/data/ccle_ctrp/gencode.v19.genes.v7_model.patched_contigs.gtf.gz"),destname=path.expand("~/CDC3/data/ccle_ctrp/gencode.v19.genes.v7_model.patched_contigs.gtf"))
+if(isPresent == 3){
+  gunzip(filename=path.expand("~/CDC3/data/ccle_ctrp/CCLE_RNAseq_genes_rpkm_20180929.gct.gz"),destname=path.expand("~/CDC3/data/ccle_ctrp/CCLE_RNAseq_genes_rpkm_20180929.gct"))
+  gunzip(filename=path.expand("~/CDC3/data/ccle_ctrp/gencode.v19.genes.v7_model.patched_contigs.gtf.gz"),destname=path.expand("~/CDC3/data/ccle_ctrp/gencode.v19.genes.v7_model.patched_contigs.gtf"))
 
-exp<-read.gct("~/CDC3/data/ccle_ctrp/CCLE_RNAseq_genes_rpkm_20180929.gct")
-colnames(exp)<-gsub("^X","",colnames(exp))
+  exp<-read.gct("~/CDC3/data/ccle_ctrp/CCLE_RNAseq_genes_rpkm_20180929.gct")
+  colnames(exp)<-gsub("^X","",colnames(exp))
 
-pdata<-read.table("~/CDC3/data/ccle_ctrp/Cell_lines_annotations_20181226.txt",header=T,sep="\t",as.is=T,quote="",comment.char="")
-rownames(pdata)<-pdata$CCLE_ID
-pdata<-pdata[colnames(exp),]
-identical(rownames(pdata),colnames(exp))
+  pdata<-read.table("~/CDC3/data/ccle_ctrp/Cell_lines_annotations_20181226.txt",header=T,sep="\t",as.is=T,quote="",comment.char="")
+  rownames(pdata)<-pdata$CCLE_ID
+  pdata<-pdata[colnames(exp),]
+  identical(rownames(pdata),colnames(exp))
 
-fdata<-read.table("~/CDC3/data/ccle_ctrp/gencode.v19.genes.v7_model.patched_contigs.gtf",header=F,sep="\t",as.is=T)
+  fdata<-read.table("~/CDC3/data/ccle_ctrp/gencode.v19.genes.v7_model.patched_contigs.gtf",header=F,sep="\t",as.is=T)
 
-fdata$gene_id<-gsub(".* ","",sapply(strsplit(fdata$V9,";"),"[",1))
-fdata$gene_type<-gsub(".* ","",sapply(strsplit(fdata$V9,";"),"[",3))
-fdata$gene_status<-gsub(".* ","",sapply(strsplit(fdata$V9,";"),"[",4))
-fdata$gene_name<-gsub(".* ","",sapply(strsplit(fdata$V9,";"),"[",5))
-fdata2<-unique(fdata[,c(2,10:13)])
-rownames(fdata2)<-fdata2$gene_id
-common<-intersect(rownames(fdata2),rownames(exp))
-fdata2<-fdata2[common,]
-exp<-exp[common,]
-identical(rownames(fdata2),rownames(exp))
+  fdata$gene_id<-gsub(".* ","",sapply(strsplit(fdata$V9,";"),"[",1))
+  fdata$gene_type<-gsub(".* ","",sapply(strsplit(fdata$V9,";"),"[",3))
+  fdata$gene_status<-gsub(".* ","",sapply(strsplit(fdata$V9,";"),"[",4))
+  fdata$gene_name<-gsub(".* ","",sapply(strsplit(fdata$V9,";"),"[",5))
+  fdata2<-unique(fdata[,c(2,10:13)])
+  rownames(fdata2)<-fdata2$gene_id
+  common<-intersect(rownames(fdata2),rownames(exp))
+  fdata2<-fdata2[common,]
+  exp<-exp[common,]
+  identical(rownames(fdata2),rownames(exp))
 
-exp.coll<-aggregate(exp,by=list(Symbol=fdata2$gene_name),sum)
-rownames(exp.coll)<-exp.coll$Symbol
-exp.coll<-as.matrix(exp.coll[,-1])
-colnames(exp.coll)<-gsub("^X","",colnames(exp.coll))
-identical(rownames(pdata),colnames(exp.coll))
-fdata<-data.frame(Symbol=rownames(exp.coll),stringsAsFactors = F)
-rownames(fdata)<-rownames(exp.coll)
-dataset<-ExpressionSet(assayData = exp.coll,
+  exp.coll<-aggregate(exp,by=list(Symbol=fdata2$gene_name),sum)
+  rownames(exp.coll)<-exp.coll$Symbol
+  exp.coll<-as.matrix(exp.coll[,-1])
+  colnames(exp.coll)<-gsub("^X","",colnames(exp.coll))
+  identical(rownames(pdata),colnames(exp.coll))
+  fdata<-data.frame(Symbol=rownames(exp.coll),stringsAsFactors = F)
+  rownames(fdata)<-rownames(exp.coll)
+  dataset<-ExpressionSet(assayData = exp.coll,
                        phenoData=new("AnnotatedDataFrame",pdata),
                        featureData = new("AnnotatedDataFrame",fdata))
-save(dataset,file="~/CDC3/data/ccle_ctrp/CCLE_RNAseq_genes_rpkm_collSum.RData")
+  save(dataset,file="~/CDC3/data/ccle_ctrp/CCLE_RNAseq_genes_rpkm_collSum.RData")
+  } else {
+    print("Missing files for CCLE. Skipping it.")
+  }
 
 # Drug response data in the Cancer Therapeutic Response Portal version 2 (CTRP) dataset (Seashore-Ludlow et al., 2015)
 # was downloaded from the supplementary information files of the corresponding main publication (PUBMED ID: 26482930)
