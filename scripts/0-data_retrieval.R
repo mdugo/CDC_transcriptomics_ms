@@ -1163,7 +1163,7 @@ if (length(files) > 0){
                        phenoData=new("AnnotatedDataFrame",pdata))
   save(dataset,file="~/CDC3/data/kidney_datasets/PRJNA605003/PRJNA605003_raw_counts_collSum.RData")
   } else {
-    print("No files detected. Skipping dataset PRJNA605003.")
+    print("No STAR output detected. Skipping dataset PRJNA605003.")
   }
 
 #*************************
