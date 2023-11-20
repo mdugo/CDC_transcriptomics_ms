@@ -1,5 +1,5 @@
 # CDC_transcriptomics_ms
-This repository contains an R script to reproduce the main figures and supplementary figures of [Gargiuli et al.](https://www.mdpi.com/2072-6694/13/12/2903) manuscript.
+This repository contains R scripts to reproduce the main and supplementary figures presented in [Gargiuli et al.](https://www.mdpi.com/2072-6694/13/12/2903).
 
 ## Instructions
 To run the scripts create the CDC folder in your user home directory. Download the repo and save the scripts in the newly created folder.
